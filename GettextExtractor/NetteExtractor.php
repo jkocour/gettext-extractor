@@ -36,6 +36,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 
 		// Set basic filters
 		$this->setFilter('php', 'PHP')
+				->setFilter('php', 'Annotation')
 				->setFilter('phtml', 'PHP')
 				->setFilter('phtml', 'NetteLatte')
 				->setFilter('latte', 'PHP')
@@ -79,6 +80,13 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('addText', 2)
 				->addFunction('addTextArea', 2)
 				->addFunction('addUpload', 2) // Nette 2.0
+				->addFunction('addDatePicker', 2)
+				->addFunction('addTimePicker', 2)
+				->addFunction('addDateTimePicker', 2)
+				->addFunction('addTagSelect', 2)
+				->addFunction('addTimeSpinner', 2)
+				->addFunction('addMultiRadioList', 2)
+				->addFunction('addMultiCheckboxList', 2)
 				->addFunction('setRequired')
 				->addFunction('setDefaultValue')
 				->addFunction('skipFirst')
@@ -105,4 +113,22 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 
 		return $this;
 	}
+
+	/**
+	 * Return data for translation, please run scan method first
+	 * @return array
+	 */
+	public function getData() {
+		return $this->data;
+	}
+
+	public function addData($data) {
+		foreach ($data as $msg => $position) {
+			if (!isset($this->data[$msg])) {
+				$this->data[$msg] = array();
+			}
+			$this->data[$msg][] = $position;
+		}
+	}
+
 }
