@@ -128,8 +128,13 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 			if (!isset($this->data[$msg])) {
 				$this->data[$msg] = array();
 			}
-			$this->data[$msg][] = $position;
+			if(is_array($data)) {
+				$this->data[$msg] = $position;
+			} else {
+				$this->data[$msg][] = $position;
+			}
 		}
+		return $this;
 	}
 
 }

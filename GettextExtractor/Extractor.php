@@ -30,6 +30,7 @@ class GettextExtractor_Extractor {
 	const CONTEXT = 'context';
 	const SINGULAR = 'singular';
 	const PLURAL = 'plural';
+	const TRANSLATION = 'translation';
 	const LINE = 'line';
 	const FILE = 'file';
 
@@ -347,11 +348,16 @@ class GettextExtractor_Extractor {
 			} else {
 				switch ($this->outputMode) {
 					case self::OUTPUT_POT:
-						$output[] = 'msgstr ""';
-						break;
+						if(empty($message[self::TRANSLATION])) {
+							$output[] = 'msgstr ""';
+							break;
+						}
 					case self::OUTPUT_PO: // fallthrough
 					default:
-						$output[] = $this->formatMessage($message[self::SINGULAR], 'msgstr');
+						$output[] = $this->formatMessage(
+								!empty($message[self::TRANSLATION]) ? $message[self::TRANSLATION] : $message[self::SINGULAR],
+								'msgstr'
+							);
 				}
 			}
 
