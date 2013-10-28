@@ -30,7 +30,9 @@ class GettextExtractor_Filters_AnnotationFilter implements GettextExtractor_Filt
 						$msg = substr($msg, 1, -1);
 					}
 
-					$data[$msg][] = $pInfo['basename'] . ':' . $line;
+					$data[$msg][GettextExtractor_Extractor::SINGULAR] = $msg;
+					$data[$msg][GettextExtractor_Extractor::FILE] = $pInfo['basename'];
+					$data[$msg][GettextExtractor_Extractor::LINE] = $line;
 				}
 			}
 		}
