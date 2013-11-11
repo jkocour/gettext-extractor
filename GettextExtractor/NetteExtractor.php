@@ -92,7 +92,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('addMultiCheckboxList', 3)
 				->addFunction('setRequired')
 				->addFunction('setDefaultValue')
-				->addFunction('skipFirst')
+				->addFunction('setPrompt')
 				->addFunction('addProtection');
 
 		return $this;
