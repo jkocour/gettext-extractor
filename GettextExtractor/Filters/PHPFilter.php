@@ -54,6 +54,9 @@ class GettextExtractor_Filters_PHPFilter extends GettextExtractor_Filters_AFilte
 		} elseif ($node instanceof PHPParser_Node_Expr_FuncCall && $node->name instanceof PHPParser_Node_Name) {
 			$parts = $node->name->parts;
 			$name = array_pop($parts);
+		} elseif ($node instanceof PhpParser_Node_Expr_New && isset($node->class->parts)) {
+			$parts = $node->class->parts;
+			$name = array_pop($parts);
 		} else {
 			return;
 		}
@@ -69,7 +72,7 @@ class GettextExtractor_Filters_PHPFilter extends GettextExtractor_Filters_AFilte
 		$message = array(
 			GettextExtractor_Extractor::LINE => $node->getLine()
 		);
-		foreach ($definition as $position => $type) {
+		foreach ($definition as $type => $position) {
 			if (!isset($node->args[$position - 1])) {
 				return;
 			}
@@ -100,6 +103,19 @@ class GettextExtractor_Filters_PHPFilter extends GettextExtractor_Filters_AFilte
 		}
 	}
 
+	/**
+	 * Includes a classs construct parameters to parse gettext phrases from
+	 *
+	 * @param $functionName string
+	 * @param $singular int
+	 * @param $plural int|null
+	 * @param $context int|null
+	 * @return self
+	 */
+	public function addClassName($functionName, $singular = 1, $plural = null, $context = null) {
+		parent::addFunction($functionName, $singular, $plural, $context);
+	}
+	
 	/*** PHPParser_NodeVisitor: dont need these *******************************/
 
 	public function afterTraverse(array $nodes) {
