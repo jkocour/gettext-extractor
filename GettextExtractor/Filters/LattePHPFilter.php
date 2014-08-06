@@ -10,7 +10,6 @@
  * @package    Nette Extras
  */
 
-require_once dirname(__FILE__) . '/iFilter.php';
 
 /**
  * Filter to fetch gettext phrases from PHP functions
