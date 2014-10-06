@@ -66,6 +66,8 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('addButton', 2)
 				->addFunction('addCheckbox', 2)
 				->addFunction('addError')
+				->addFunction('addPrice', 2)
+				->addFunction('addRemoteSelect', 2)
 				->addFunction('addFile', 2) // Nette 0.9
 				->addFunction('addGroup')
 				->addFunction('addImage', 3)
@@ -110,10 +112,12 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('addDateColumn', 2)
 				->addFunction('addCheckboxColumn', 2)
 				->addFunction('addImageColumn', 2)
+				->addFunction('addPriceColumn', 2)
 				->addFunction('addOrderColumn', 3)
 				->addFunction('addPositionColumn', 2)
 				->addFunction('addActionColumn')
-				->addFunction('addAction');
+				->addFunction('addAction')
+				->addFunction('setLabel');
 
 		return $this;
 	}
