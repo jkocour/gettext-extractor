@@ -42,11 +42,22 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->setFilter('latte', 'PHP')
 				->setFilter('latte', 'NetteLatte');
 
+
+		$this->setFilter('latte', 'LattePHP');
+		$this->addFilter('LattePHP', new \GettextExtractor_Filters_LattePHPFilter());
+		$this->getFilter('LattePHP')
+				->addFunction('_')
+				->addFunction('translate');
+		$this->setFilter('js', 'JS');
+		$this->addFilter('JS', new  GettextExtractor_Filters_JsFilter());
+
 		$this->addFilter('NetteLatte', new GettextExtractor_Filters_NetteLatteFilter());
 		$this->addFilter('Annotation', new GettextExtractor_Filters_AnnotationFilter());
 
 		$this->getFilter('PHP')
-				->addFunction('translate');
+				->addFunction('translate')
+				->addFunction('MenuNode', 2)
+				->addFunction('setLabel');
 
 		$this->getFilter('NetteLatte')
 				->addPrefix('!_')
