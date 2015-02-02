@@ -39,7 +39,6 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->setFilter('php', 'Annotation')
 				->setFilter('phtml', 'PHP')
 				->setFilter('phtml', 'NetteLatte')
-				->setFilter('latte', 'PHP')
 				->setFilter('latte', 'NetteLatte');
 
 
