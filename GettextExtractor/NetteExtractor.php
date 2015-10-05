@@ -55,12 +55,16 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 
 		$this->getFilter('PHP')
 				->addFunction('translate')
+				->addFunction('ntranslate', 1, 1)
+				->addFunction('plural', 1, 1)
 				->addFunction('MenuNode', 2)
 				->addFunction('setLabel');
 
 		$this->getFilter('NetteLatte')
 				->addPrefix('!_')
-				->addPrefix('_');
+				->addPrefix('_')
+				->addPrefix('!_n', 1, 1)
+				->addPrefix('_n', 1, 1);
 	}
 
 	/**
