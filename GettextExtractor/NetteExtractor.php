@@ -126,6 +126,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('addDateColumn', 2)
 				->addFunction('addCheckboxColumn', 2)
 				->addFunction('addImageColumn', 2)
+				->addFunction('addFileColumn', 2)
 				->addFunction('addPriceColumn', 2)
 				->addFunction('addOrderColumn', 3)
 				->addFunction('addPositionColumn', 2)
