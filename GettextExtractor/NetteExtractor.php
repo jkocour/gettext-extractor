@@ -148,13 +148,9 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 	public function addData($data) {
 		foreach ($data as $msg => $position) {
 			if (!isset($this->data[$msg])) {
-				$this->data[$msg] = array();
+				$this->data[$msg] = [];
 			}
-			if(is_array($data)) {
-				$this->data[$msg] = $position;
-			} else {
-				$this->data[$msg][] = $position;
-			}
+			$this->data[$msg] = Nette\Utils\Arrays::mergeTree($this->data[$msg], $position);
 		}
 		return $this;
 	}
