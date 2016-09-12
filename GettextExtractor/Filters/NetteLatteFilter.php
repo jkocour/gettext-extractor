@@ -48,12 +48,6 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 	public function __construct() {
 		$this->addFunction('_');
 		$this->addFunction('!_');
-		$this->addFunction('_n', 1, 2);
-		$this->addFunction('!_n', 1, 2);
-		$this->addFunction('_p', 2, null, 1);
-		$this->addFunction('!_p', 2, null, 1);
-		$this->addFunction('_np', 2, 3, 1);
-		$this->addFunction('!_np', 2, 3, 1);
 	}
 
 	/**
@@ -103,8 +97,8 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 		foreach (file($file) as $line => $contents) {
 			$matches = array();
 			preg_match_all($regex, $contents, $matches, PREG_SET_ORDER);
-
 			foreach ($matches as $message) {
+
 				/* $message[0] = complete macro
 				 * $message[1] = prefix
 				 * $message[2] = 1. parameter
