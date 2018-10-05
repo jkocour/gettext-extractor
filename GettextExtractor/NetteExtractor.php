@@ -109,7 +109,8 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('setRequired')
 				->addFunction('setDefaultValue')
 				->addFunction('setPrompt')
-				->addFunction('addProtection');
+				->addFunction('addProtection')
+				->addFunction('allowUpload');
 
 		return $this;
 	}
