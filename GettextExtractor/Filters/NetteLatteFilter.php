@@ -69,10 +69,14 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 		$latte = new \Latte\Parser();
 		foreach($latte->parse(file_get_contents($file)) as $token) {
 			if(preg_match($regexp, $token->name) || preg_match($regexp, $token->text)) {
-				$macroTokens = new \Latte\MacroTokens($token->text);
-				foreach($this->extractTokens($macroTokens) as $translation) {
-					$translation[GettextExtractor_Extractor::LINE] = $token->line;
-					$data[] = $translation;
+				try {
+					$macroTokens = new \Latte\MacroTokens($token->text);
+					foreach($this->extractTokens($macroTokens) as $translation) {
+						$translation[GettextExtractor_Extractor::LINE] = $token->line;
+						$data[] = $translation;
+					}
+				} catch(Latte\CompileException $e) {
+					
 				}
 			}
 		}
@@ -80,12 +84,10 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 	}
 	
 	private function extractTokens(\Latte\MacroTokens $tokens) {
-		$data = [];
 		$tokens->nextToken();
-		$tokens->nextToken();
-		$nthArguments = $this->getRequiredArguments($tokens->currentValue());
-		$data = array_merge($data, $this->addNthArgument($tokens, $nthArguments));
-		return $data;
+		foreach($this->getTranslations($tokens) as $translation) {
+			yield $translation;
+		}
 	}
 	
 	private function getRequiredArguments($function) {
@@ -101,44 +103,56 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 		return $requiredArguments;
 	}
 
-	private function addNthArgument(\Latte\MacroTokens $tokens, array $nthArguments) {
+	private function getTranslations(\Latte\MacroTokens $tokens, &$parentArgument = NULL) {
 		$argumentPosition = 1;
-		$level = 0;
-		$levelArguments = [0 => []];
-		$levelRequiredArguments = [0 => $nthArguments];
-		$levelTernalOperator = [0 => 0];
-		$foundedTranslations = [];
-		while($tokens->nextToken()) {
+		$ternalOperator = 0;
+		$currentArgument = NULL;
+		$translations = [];
+		$requiredArguments = [];
+		$arguments = [];
+		while($token = $tokens->nextToken()) {
 			if($tokens->isCurrent($tokens::T_WHITESPACE)) {
 				continue;
 			}
 			if($tokens->isCurrent(':')) {
-				if(!$levelTernalOperator[$level]) {
+				if(!$ternalOperator) {
 					$argumentPosition++;
 				} else {
-					$levelTernalOperator--;
+					$ternalOperator--;
 				}
 			} elseif($tokens->isCurrent('?')) {
-				$levelTernalOperator[$level]++;
+				$ternalOperator++;
+			} elseif($tokens->isCurrent($tokens::T_SYMBOL) && !$arguments) {
+				
+				$requiredArguments = $this->getRequiredArguments($tokens->currentValue());
 			} elseif($tokens->isCurrent('|')) {
 				$tokens->nextToken();
-				$levelRequiredArguments[$level] = $this->getRequiredArguments($tokens->currentValue());
-			} elseif($tokens->isCurrent(['(', '['])) {
-				$level++;
-				$levelArguments[$level] = [];
-			} elseif($tokens->isCurrent([')', ']']) || !$tokens->isNext()) {
-				$finalTranslation = $this->getLevelTranslations($levelArguments[$level], $levelRequiredArguments[$level]);
-				if(count($finalTranslation)) {
-					$foundedTranslations[] = $finalTranslation;
+				if(!$requiredArguments) {
+					$requiredArguments = $this->getRequiredArguments($tokens->currentValue());
 				}
-				$level--;
+			} elseif($tokens->isCurrent('(', '[')) {
+				$translations = $this->getTranslations($tokens, $currentArgument);
+				foreach($translations as $translation) {
+					yield $translation;
+				}
+			} elseif($tokens->isCurrent(')', ']') || !$tokens->isNext()) {
+				$arguments[count($arguments)+1] = $currentArgument;
+				$finalTranslation = $this->getLevelTranslations($arguments, $requiredArguments);
+				if(count($finalTranslation)) {
+					yield $finalTranslation;
+				} else {
+					$parentArgument = $currentArgument;
+				}
+				break;
 			} elseif($tokens->isCurrent(',')) {
+				$arguments[count($arguments)+1] = $currentArgument;
 				$argumentPosition++;
+				$currentArgument = NULL;
 			} elseif($tokens->isCurrent($tokens::T_STRING)) {
-				$levelArguments[$level][$argumentPosition] = $tokens->currentValue();
+				$currentArgument = $tokens->currentValue();
 			}
 		}
-		return $foundedTranslations;
+		
 	}
 	
 	private function getLevelTranslations($levelArguments, $requiredArguments) {
