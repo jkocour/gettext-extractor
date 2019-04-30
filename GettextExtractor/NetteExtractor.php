@@ -49,6 +49,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 		$this->addFilter('Annotation', new GettextExtractor_Filters_AnnotationFilter());
 
 		$this->getFilter('PHP')
+				->addFunction('__')
 				->addFunction('translate')
 				->addFunction('ntranslate', 1, 1)
 				->addFunction('plural', 1, 1)
