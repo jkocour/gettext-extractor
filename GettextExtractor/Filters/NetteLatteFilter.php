@@ -111,9 +111,6 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 		$requiredArguments = [];
 		$arguments = [];
 		while($token = $tokens->nextToken()) {
-			if($tokens->isCurrent($tokens::T_WHITESPACE)) {
-				continue;
-			}
 			if($tokens->isCurrent(':')) {
 				if(!$ternalOperator) {
 					$argumentPosition++;
