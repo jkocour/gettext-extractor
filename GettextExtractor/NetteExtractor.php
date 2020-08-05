@@ -77,6 +77,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 				->addFunction('setValue')
 				->addFunction('addButton', 2)
 				->addFunction('addCheckbox', 2)
+				->addFunction('addCheckboxList', 2)
 				->addFunction('addError')
 				->addFunction('addPrice', 2)
 				->addFunction('addRemoteSelect', 2)
