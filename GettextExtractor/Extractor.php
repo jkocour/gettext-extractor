@@ -150,11 +150,10 @@ class GettextExtractor_Extractor {
 		if (is_file($resource)) {
 			$this->inputFiles[] = $resource;
 		} elseif (is_dir($resource)) {
-			$iterator = new RecursiveIteratorIterator(
-					new RecursiveDirectoryIterator($resource, RecursiveDirectoryIterator::SKIP_DOTS)
-			);
-			foreach ($iterator as $file) {
-				$this->inputFiles[] = $file->getPathName();
+			foreach (\Nette\Utils\Finder::findFiles()
+					->from($resource)
+					->exclude('.git') as $file) {
+				$this->inputFiles[] = $file->getPathname();
 			}
 		} else {
 			$this->throwException("Resource '$resource' is not a directory or file");
