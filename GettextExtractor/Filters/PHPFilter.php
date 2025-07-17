@@ -52,10 +52,10 @@ class GettextExtractor_Filters_PHPFilter extends GettextExtractor_Filters_AFilte
 		if (($node instanceof PhpParser\Node\Expr\MethodCall || $node instanceof PhpParser\Node\Expr\StaticCall) && $node->name instanceof PhpParser\Node\Identifier) {
 			$name = $node->name->name;
 		} elseif ($node instanceof PhpParser\Node\Expr\FuncCall && $node->name instanceof PhpParser\Node\Name) {
-			$parts = $node->name->parts;
+			$parts = $node->name->getParts();
 			$name = array_pop($parts);
 		} elseif ($node instanceof \PhpParser\Node\Expr\New_ && isset($node->class->parts)) {
-			$parts = $node->class->parts;
+			$parts = $node->class->getParts();
 			$name = array_pop($parts);
 		} else {
 			return;
