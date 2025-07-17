@@ -28,7 +28,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 	 *
 	 * @param string|bool $logToFile
 	 */
-	public function __construct($logToFile = false) {
+	public function __construct(\Nette\Bridges\ApplicationLatte\TemplateFactory $templateFactory, $logToFile = false, ) {
 		parent::__construct($logToFile);
 
 		// Clean up...
@@ -45,7 +45,7 @@ class GettextExtractor_NetteExtractor extends GettextExtractor_Extractor {
 		$this->setFilter('js', 'JS');
 		$this->addFilter('JS', new  GettextExtractor_Filters_JsFilter());
 
-		$this->addFilter('NetteLatte', new GettextExtractor_Filters_NetteLatteFilter());
+		$this->addFilter('NetteLatte', new GettextExtractor_Filters_NetteLatteFilter($templateFactory));
 		$this->addFilter('Annotation', new GettextExtractor_Filters_AnnotationFilter());
 
 		$this->getFilter('PHP')

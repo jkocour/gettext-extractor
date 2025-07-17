@@ -21,7 +21,7 @@
  */
 class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters_AFilter implements GettextExtractor_Filters_IFilter {
 
-	public function __construct() {
+	public function __construct(private \Nette\Bridges\ApplicationLatte\TemplateFactory $templateFactory) {
 		$this->addFunction('_');
 		$this->addFunction('!_');
 	}
@@ -60,105 +60,72 @@ class GettextExtractor_Filters_NetteLatteFilter extends GettextExtractor_Filters
 	 * @return array
 	 */
 	public function extract($file) {
-		if (count($this->functions) === 0) {
-			return;
-		}
+		$template = $this->templateFactory->createTemplate();
+		$latte = $template->getLatte();
 		$data = [];
-		
-		$regexp = '/' . implode('|', array_keys($this->functions)) . '/';
-		$latte = new \Latte\Parser();
-		foreach($latte->parse(file_get_contents($file)) as $token) {
-			if(preg_match($regexp, $token->name) || preg_match($regexp, $token->text)) {
-				try {
-					$macroTokens = new \Latte\MacroTokens($token->text);
-					foreach($this->extractTokens($macroTokens) as $translation) {
-						$translation[GettextExtractor_Extractor::LINE] = $token->line;
-						$data[] = $translation;
-					}
-				} catch(Latte\CompileException $e) {
-					
-				}
-			}
-		}
-		return $data;
-	}
-	
-	private function extractTokens(\Latte\MacroTokens $tokens) {
-		$tokens->nextToken();
-		foreach($this->getTranslations($tokens) as $translation) {
-			yield $translation;
-		}
-	}
-	
-	private function getRequiredArguments($function) {
-		$requiredArguments = [];
-		if(isset($this->functions[$function])) {
-			foreach($this->functions[$function] as $definition) {
-				$requiredArguments[GettextExtractor_Extractor::SINGULAR] = $definition[GettextExtractor_Extractor::SINGULAR];
-				if(isset($definition[GettextExtractor_Extractor::PLURAL])) {
-					$requiredArguments[GettextExtractor_Extractor::PLURAL] = $definition[GettextExtractor_Extractor::PLURAL];
-				}
-			}
-		}
-		return $requiredArguments;
-	}
+		// přidáme vlastní Extension pro AST průchod
+		$latte->addExtension(new class($data) extends \Latte\Extension {
+			public function __construct(private array &$collected) {}
 
-	private function getTranslations(\Latte\MacroTokens $tokens, &$parentArgument = NULL) {
-		$argumentPosition = 1;
-		$ternalOperator = 0;
-		$currentArgument = NULL;
-		$translations = [];
-		$requiredArguments = [];
-		$arguments = [];
-		while($token = $tokens->nextToken()) {
-			if($tokens->isCurrent(':')) {
-				if(!$ternalOperator) {
-					$argumentPosition++;
-				} else {
-					$ternalOperator--;
-				}
-			} elseif($tokens->isCurrent('?')) {
-				$ternalOperator++;
-			} elseif($tokens->isCurrent($tokens::T_SYMBOL) && !$arguments) {
-				
-				$requiredArguments = $this->getRequiredArguments($tokens->currentValue());
-			} elseif($tokens->isCurrent('|')) {
-				$tokens->nextToken();
-				if(!$requiredArguments) {
-					$requiredArguments = $this->getRequiredArguments($tokens->currentValue());
-				}
-			} elseif($tokens->isCurrent('(', '[')) {
-				$translations = $this->getTranslations($tokens, $currentArgument);
-				foreach($translations as $translation) {
-					yield $translation;
-				}
-			} elseif($tokens->isCurrent(')', ']') || !$tokens->isNext()) {
-				$arguments[count($arguments)+1] = $currentArgument;
-				$finalTranslation = $this->getLevelTranslations($arguments, $requiredArguments);
-				if(count($finalTranslation)) {
-					yield $finalTranslation;
-				} else {
-					$parentArgument = $currentArgument;
-				}
-				break;
-			} elseif($tokens->isCurrent(',')) {
-				$arguments[count($arguments)+1] = $currentArgument;
-				$argumentPosition++;
-				$currentArgument = NULL;
-			} elseif($tokens->isCurrent($tokens::T_STRING)) {
-				$currentArgument = $tokens->currentValue();
+			public function getPasses(): array {
+				return [
+					'extract' => $this->extract(...),
+				];
 			}
-		}
-		
-	}
-	
-	private function getLevelTranslations($levelArguments, $requiredArguments) {
-		$translation = [];
-		if(count($levelArguments) && count($requiredArguments)) {
-			foreach($requiredArguments as $key => $requiredArgument) {
-				 $translation[$key] = $this->stripQuotes($this->fixEscaping($levelArguments[$requiredArgument])); 
+
+			private function extract(\Latte\Compiler\Nodes\TemplateNode $node) {
+				(new \Latte\Compiler\NodeTraverser())->traverse(
+					$node,
+					enter: function ($currentNode) {
+						if ($currentNode instanceof \Fregis\Localization\TranslationNode) {
+							if (in_array($currentNode->mode, ['_', 'n_'], true)) {
+								$text = reset($currentNode->args->items)->value;
+								if($text instanceof \Latte\Compiler\Nodes\Php\Scalar\StringNode) {
+									$this->stringNodeToRow($text, $currentNode->mode === 'n_');
+								}
+							}
+						}
+
+						if ($currentNode instanceof Latte\Essential\Nodes\PrintNode && $currentNode->modifier && $currentNode->modifier->filters) {
+							$translationFilter = null;
+							foreach($currentNode->modifier->filters as $filter) {
+								if ($filter instanceof \Latte\Compiler\Nodes\Php\FilterNode && $filter->name instanceof \Latte\Compiler\Nodes\Php\IdentifierNode && in_array($filter->name->name, ['translate', 'ntranslate'], true)) {
+									$translationFilter = $filter->name->name;
+									break;
+								}
+							}
+							if ($translationFilter) {
+								$value = $currentNode->expression;
+								if ($value instanceof \Latte\Compiler\Nodes\Php\Scalar\StringNode) {
+									$this->stringNodeToRow($value, $translationFilter === 'ntranslate');
+								}
+							}
+						}
+
+						if($currentNode instanceof \Latte\Compiler\Nodes\Php\Expression\FilterCallNode
+							&& $currentNode->expr instanceof \Latte\Compiler\Nodes\Php\Scalar\StringNode
+							&& $currentNode->filter instanceof \Latte\Compiler\Nodes\Php\FilterNode
+							&& $currentNode->filter->name instanceof \Latte\Compiler\Nodes\Php\IdentifierNode
+							&& in_array($currentNode->filter->name->name, ['translate', 'ntranslate'], true)
+						) {
+							$this->stringNodeToRow($currentNode->expr, $currentNode->filter->name->name === 'ntranslate');
+						}
+					}
+				);
 			}
-		}
-		return $translation;
+			private function stringNodeToRow(\Latte\Compiler\Nodes\Php\Scalar\StringNode $node, bool $plural = false) {
+				$row = [
+					GettextExtractor_Extractor::SINGULAR => $node->value,
+					GettextExtractor_Extractor::LINE => $node->position->line ?? null,
+				];
+				if($plural) {
+					$row[GettextExtractor_Extractor::PLURAL] = $node->value;
+				}
+				$this->collected[] = $row;
+			}
+		});
+
+		$latte->compile($file);
+		return $data;
 	}
 }
