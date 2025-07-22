@@ -73,7 +73,7 @@ class GettextExtractor_Filters_PHPFilter extends GettextExtractor_Filters_AFilte
 			GettextExtractor_Extractor::LINE => $node->getLine()
 		);
 		foreach ($definition as $type => $position) {
-			if (!isset($node->args[$position - 1])) {
+			if (!isset($node->args[$position - 1]) || $node->args[$position - 1] instanceof \PhpParser\Node\VariadicPlaceholde) {
 				return;
 			}
 			$arg = $node->args[$position - 1]->value;
